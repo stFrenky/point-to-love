@@ -1,0 +1,88 @@
+stages:
+- sonarcube
+- build
+- deploy
+
+variables:
+  DOCKER_REGISTRY: 'cr.yandex/crp8p96f0l3apglbeovp'
+  DOCKER_REGISTRY_PROD: 'cr.yandex/crp8bb5930fqm90q8aa4'
+  DIST_CACHE: "build-point-to-love"
+
+sonarqube-check:
+  image:
+    name: sonarsource/sonar-scanner-cli:latest
+    entrypoint: [""]
+  stage: sonarcube
+  variables:
+    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
+    GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
+  cache:
+    key: "sonar"
+    paths:
+      - .sonar/cache
+  script:
+    - sonar-scanner
+  allow_failure: true
+
+build-front-image-dev:
+  stage: build
+  image: docker:dind
+  script:
+    - docker build -t ${DOCKER_REGISTRY}/point-to-love:${CI_COMMIT_SHORT_SHA} -f Dockerfile .
+    - docker login  --username oauth  --password ${YC_TOKEN}  cr.yandex
+    - docker push ${DOCKER_REGISTRY}/point-to-love:${CI_COMMIT_SHORT_SHA}
+  except:
+    - master
+
+build-front-image-prod:
+  stage: build
+  image: docker:dind
+  script:
+    - docker build -t ${DOCKER_REGISTRY_PROD}/point-to-love:${CI_COMMIT_SHORT_SHA} -f Dockerfile .
+    - docker login  --username oauth  --password ${YC_TOKEN}  cr.yandex
+    - docker push ${DOCKER_REGISTRY_PROD}/point-to-love:${CI_COMMIT_SHORT_SHA}
+  only:
+    - master
+
+.prepare_k8s_dev: &prepare_k8s_dev |
+    kubectl config set-cluster k8s --insecure-skip-tls-verify=true --server=$K8S_API_URL_DEV_VIPSY
+    kubectl config set-credentials ci --token=$K8S_CI_TOKEN_DEV_VIPSY
+    kubectl config set-context ci --cluster=k8s --user=ci
+    kubectl config use-context ci
+
+.prepare_k8s_prod: &prepare_k8s_prod |
+    kubectl config set-cluster k8s --insecure-skip-tls-verify=true --server=$K8S_API_URL_PROD_VIPSY
+    kubectl config set-credentials ci --token=$K8S_CI_TOKEN_PROD_VIPSY
+    kubectl config set-context ci --cluster=k8s --user=ci
+    kubectl config use-context ci
+
+deploy-point-to-love-dev:
+  stage: deploy
+  image: centosadmin/kubernetes-helm:3.6.3
+  except:
+    - master
+  before_script:
+    - *prepare_k8s_dev
+  script:
+    - |
+      helm upgrade --install "point-to-love-landing" "./charts" -f "./charts/values.yaml" --namespace vipsy \
+      --set chart="point-to-love-russian" \
+      --set client_site.host="point-to-love.dev.millenial-tech.ru" \
+      --set client_site.name="point-to-love-russian" \
+      --set client_site.image="${DOCKER_REGISTRY}/point-to-love:${CI_COMMIT_SHORT_SHA}"
+
+deploy-point-to-love-prod:
+  stage: deploy
+  image: centosadmin/kubernetes-helm:3.6.3
+  when: manual
+  only:
+    - master
+  before_script:
+    - *prepare_k8s_prod
+  script:
+    - |
+      helm upgrade --install "point-to-love-landing" "./charts" -f "./charts/values.yaml" --namespace vipsy \
+      --set chart="point-to-love-russian" \
+      --set client_site.host="psyhology.tochka-lubvi.ru" \
+      --set client_site.name="point-to-love-russian" \
+      --set client_site.image="${DOCKER_REGISTRY_PROD}/point-to-love:${CI_COMMIT_SHORT_SHA}"

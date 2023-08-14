@@ -1,0 +1,48 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Values.client_site.name | quote }}
+  annotations:
+      kubernetes.io/ingress.class: "nginx"
+      cert-manager.io/cluster-issuer: "letsencrypt"
+      nginx.ingress.kubernetes.io/enable-cors: "true"
+      nginx.ingress.kubernetes.io/cors-allow-methods: "PUT, GET, POST, PATCH, OPTIONS"
+      nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+      nginx.ingress.kubernetes.io/cors-allow-credentials: "false"
+spec:
+  tls:
+    - hosts:
+        - {{ .Values.client_site.host | quote }}
+      secretName: letsencrypt-lukoil
+  rules:
+    - host: {{ .Values.client_site.host | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Values.client_site.name | quote }}
+                port:
+                  number: {{ .Values.client_site.port }}
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: vipsy-russian-backend
+                port:
+                  number: 3030
+          - path: /media
+            pathType: Prefix
+            backend:
+              service:
+                name: vipsy-russian-backend
+                port:
+                  number: 3030
+          - path: /feed/v2
+            pathType: Prefix
+            backend:
+              service:
+                name: vipsy-russian-websocket-bridge
+                port:
+                  number: 3307

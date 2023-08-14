@@ -1,0 +1,43 @@
+.el-overlay {
+  &-dialog {
+    display: flex;
+    .el-dialog {
+      margin: auto;
+      border-radius: 10px !important;
+      @media (max-width: 1000px) {
+        width: 100%;
+      }
+      @media (max-width: 425px) {
+        height: 100%;
+      }
+    }
+  }
+}
+.el-dialog {
+  width: 100%;
+  max-width: 640px;
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    margin: 0!important;
+    padding: 0!important;
+    .dialog__container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      margin: 20px 20px 0 20px;
+      padding: 18px 18px 18px 30px;
+      background: #F7F7F7;
+    }
+    .title {
+      font-weight: 700;
+      font-size: 22px;
+      line-height: 140%;
+    }
+  }
+}
+.el-dialog__headerbtn .el-icon svg {
+  height: 2em;
+  width: 2em;
+}

@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.client_site.name }}
+  labels:
+    app.kubernetes.io/name: {{ .Values.client_site.name }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    helm.sh/chart: {{ .Values.chart }}
+spec:
+  ports:
+    - name: {{ .Values.client_site.port | quote }}
+      port: {{ .Values.client_site.port }}
+      targetPort: {{ .Values.client_site.port }}
+  selector:
+    app.kubernetes.io/name: {{ .Values.client_site.name }}
+    app.kubernetes.io/instance: {{ .Release.Name }}

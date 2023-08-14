@@ -1,0 +1,1 @@
+export { TLTitleBg } from './components';

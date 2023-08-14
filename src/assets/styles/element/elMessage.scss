@@ -1,0 +1,14 @@
+.el-message {
+  left: inherit;
+  transform: inherit;
+  right: 16px;
+  .el-icon, svg {
+    height: 2em;
+    width: 2em;
+  }
+  .el-message__content {
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 120%;
+  }
+}

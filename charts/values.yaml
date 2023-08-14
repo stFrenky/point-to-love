@@ -1,0 +1,12 @@
+pullPolicy: "Always"
+chart: "point-to-love"
+env: ""
+client_site:
+  host: ""
+  name: "point-to-love"
+  image: ""
+  port: 80
+
+api:
+  name_service: "point-to-love-api-russian"
+  port_service: "5993"
